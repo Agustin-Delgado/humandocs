@@ -27,6 +27,17 @@ describe('humandocsMarkdown output', () => {
 		expect(code).toMatchSnapshot();
 	});
 
+	test('block-level components are not wrapped in <p> (would break hydration)', async () => {
+		const code = await runPreprocessor('block-components.md');
+		// A component alone on its line must not be paragraph-wrapped: it may
+		// render a block element, and <p><div> is invalid HTML.
+		expect(code).not.toMatch(/<p>\s*<Demo/);
+		expect(code).not.toMatch(/<p>\s*<Counter start=\{2\}/);
+		// Inline usage keeps its surrounding paragraph.
+		expect(code).toMatch(/<p>Inline <Counter start=\{1\} \/> stays inside a paragraph\.<\/p>/);
+		expect(code).toMatchSnapshot();
+	});
+
 	test('code blocks without a highlighter fall back to pre/code', async () => {
 		const code = await runPreprocessor('code-blocks.md');
 		expect(code).toContain('&#123;#if open&#125;');

@@ -25,6 +25,23 @@ exports[`humandocsMarkdown output > basic markdown 1`] = `
 "
 `;
 
+exports[`humandocsMarkdown output > block-level components are not wrapped in <p> (would break hydration) 1`] = `
+"<script module>
+	export const metadata = {"title":"Block components"};
+</script>
+
+<script>
+	import Demo from './counter.svelte';
+	import Counter from './counter.svelte';
+</script>
+
+<h1>Block components</h1>
+<Demo source={heroSource}><Counter /></Demo>
+<p>Inline <Counter start={1} /> stays inside a paragraph.</p>
+<Counter start={2} />
+"
+`;
+
 exports[`humandocsMarkdown output > blueprint: false opts out of wrapping 1`] = `
 "<script module>
 	export const metadata = {"title":"No blueprint","blueprint":false};

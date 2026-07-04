@@ -11,8 +11,18 @@
 	},
 	"homepage": "https://github.com/Agustin-Delgado/humandocs/tree/main/packages/humandocs",
 	"bugs": "https://github.com/Agustin-Delgado/humandocs/issues",
-	"keywords": ["svelte", "sveltekit", "documentation", "docs", "fumadocs", "shiki"],
+	"keywords": [
+		"svelte",
+		"sveltekit",
+		"documentation",
+		"docs",
+		"fumadocs",
+		"shiki"
+	],
 	"svelte": "./dist/index.js",
+	"bin": {
+		"humandocs": "./dist/cli/index.js"
+	},
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -47,14 +57,18 @@
 		},
 		"./package.json": "./package.json"
 	},
-	"files": ["dist", "!dist/**/*.test.*"],
+	"files": [
+		"dist",
+		"!dist/**/*.test.*"
+	],
 	"scripts": {
-		"package": "svelte-kit sync && svelte-package && publint",
+		"package": "svelte-kit sync && svelte-package && tsc -p tsconfig.cli.json && publint",
 		"prepublishOnly": "pnpm run package",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {
-		"shiki": "^4.3.0"
+		"shiki": "^4.3.0",
+		"ts-morph": "^28.0.0"
 	},
 	"peerDependencies": {
 		"@sveltejs/kit": "^2.0.0",

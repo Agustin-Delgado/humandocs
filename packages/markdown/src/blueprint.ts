@@ -60,9 +60,7 @@ export function selectBlueprint(
 	if (typeof requested === 'string') {
 		const blueprint = config.blueprints[requested];
 		if (!blueprint) {
-			throw new Error(
-				`humandocs-markdown: ${filename} requests unknown blueprint "${requested}"`
-			);
+			throw new Error(`humandocs-markdown: ${filename} requests unknown blueprint "${requested}"`);
 		}
 		return resolveBlueprint(blueprint);
 	}

@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"target": "es2022",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"outDir": "dist/cli",
+		"rootDir": "src/cli",
+		"declaration": false,
+		"sourceMap": false,
+		"types": ["node"]
+	},
+	"include": ["src/cli"]
+}

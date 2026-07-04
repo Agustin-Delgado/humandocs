@@ -15,10 +15,7 @@ export function getHighlighter(): Promise<Highlighter> {
  * backticks must be escaped or Svelte parses them as expressions.
  */
 export function escapeSvelte(html: string): string {
-	return html
-		.replace(/{/g, '&#123;')
-		.replace(/}/g, '&#125;')
-		.replace(/`/g, '&#96;');
+	return html.replace(/{/g, '&#123;').replace(/}/g, '&#125;').replace(/`/g, '&#96;');
 }
 
 /**

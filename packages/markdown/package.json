@@ -11,7 +11,15 @@
 	},
 	"homepage": "https://github.com/Agustin-Delgado/humandocs/tree/main/packages/markdown",
 	"bugs": "https://github.com/Agustin-Delgado/humandocs/issues",
-	"keywords": ["svelte", "markdown", "preprocessor", "unified", "remark", "rehype", "mdsvex"],
+	"keywords": [
+		"svelte",
+		"markdown",
+		"preprocessor",
+		"unified",
+		"remark",
+		"rehype",
+		"mdsvex"
+	],
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -19,7 +27,9 @@
 		},
 		"./package.json": "./package.json"
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsup",
 		"test": "vitest run",

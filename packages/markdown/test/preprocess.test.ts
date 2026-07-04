@@ -94,9 +94,9 @@ describe('humandocsMarkdown output', () => {
 	});
 
 	test('unknown blueprint name throws a clear error', async () => {
-		await expect(
-			runPreprocessor('blueprint-named.md', { blueprints: {} })
-		).rejects.toThrow(/unknown blueprint "plain"/);
+		await expect(runPreprocessor('blueprint-named.md', { blueprints: {} })).rejects.toThrow(
+			/unknown blueprint "plain"/
+		);
 	});
 
 	test('non-markdown files are ignored', async () => {

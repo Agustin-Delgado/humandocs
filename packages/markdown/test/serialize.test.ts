@@ -110,9 +110,9 @@ describe('extractBlocks', () => {
 	});
 
 	test('throws on duplicate instance scripts', () => {
-		expect(() =>
-			extractBlocks('<script>1</script>\n<script>2</script>')
-		).toThrow(/only one instance/);
+		expect(() => extractBlocks('<script>1</script>\n<script>2</script>')).toThrow(
+			/only one instance/
+		);
 	});
 
 	test('inline-code tag mentions never open or close a block', () => {

@@ -15,10 +15,7 @@ export type { MarkdownConfig, BlueprintConfig, Highlighter } from './config.js';
  * them as expressions. Use on highlighter output before returning it.
  */
 export function escapeSvelte(html: string): string {
-	return html
-		.replace(/{/g, '&#123;')
-		.replace(/}/g, '&#125;')
-		.replace(/`/g, '&#96;');
+	return html.replace(/{/g, '&#123;').replace(/}/g, '&#125;').replace(/`/g, '&#96;');
 }
 
 export function humandocsMarkdown(userConfig: MarkdownConfig = {}): PreprocessorGroup {

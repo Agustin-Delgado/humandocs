@@ -36,5 +36,14 @@ export default defineConfig(
 				parser: ts.parser
 			}
 		}
+	},
+	{
+		// Library components link to consumer-provided paths (nav slugs,
+		// githubUrl, homeHref); `base` is prepended manually, and resolve()
+		// cannot type dynamic paths.
+		files: ['packages/humandocs/src/lib/components/**'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
 	}
 );

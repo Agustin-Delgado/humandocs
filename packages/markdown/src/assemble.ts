@@ -34,7 +34,10 @@ export function assemble(input: AssembleInput): string {
 			: `\timport ${BLUEPRINT_IDENTIFIER} from '${blueprint.importPath}';`
 		: undefined;
 	if (blueprintImport || instanceScript) {
-		const instanceBody = [blueprintImport, instanceScript ? trimBlock(instanceScript.body) : undefined]
+		const instanceBody = [
+			blueprintImport,
+			instanceScript ? trimBlock(instanceScript.body) : undefined
+		]
 			.filter((section) => section !== undefined && section !== '')
 			.join('\n\n');
 		parts.push(`<script${instanceScript?.attributes ?? ''}>\n${instanceBody}\n</script>`);
@@ -42,9 +45,7 @@ export function assemble(input: AssembleInput): string {
 
 	const body = markup.trim();
 	parts.push(
-		blueprint
-			? `<${BLUEPRINT_IDENTIFIER} {metadata}>\n${body}\n</${BLUEPRINT_IDENTIFIER}>`
-			: body
+		blueprint ? `<${BLUEPRINT_IDENTIFIER} {metadata}>\n${body}\n</${BLUEPRINT_IDENTIFIER}>` : body
 	);
 
 	if (styleTag) parts.push(styleTag.trim());

@@ -6,6 +6,7 @@ import { extractBlocks } from './extract-blocks.js';
 import { selectBlueprint } from './blueprint.js';
 import { createPipeline } from './pipeline.js';
 import { serialize, type HastNode } from './serialize.js';
+import { unwrapBlockParagraphs } from './unwrap.js';
 import { assemble, BLUEPRINT_NAMESPACE } from './assemble.js';
 
 export type { MarkdownConfig, BlueprintConfig, Highlighter } from './config.js';
@@ -36,6 +37,10 @@ export function humandocsMarkdown(userConfig: MarkdownConfig = {}): Preprocessor
 			const file = new VFile({ path: filename, value: blocks.content });
 			const mdast = processor.parse(file);
 			const hast = (await processor.run(mdast, file)) as unknown as HastNode;
+			// Block-level components on their own line get wrapped in <p> by
+			// remark; unwrap so `<p><div></p>` never reaches the browser (it
+			// breaks hydration).
+			unwrapBlockParagraphs(hast);
 
 			const markup = serialize(hast, {
 				overrides: blueprint?.overrides,

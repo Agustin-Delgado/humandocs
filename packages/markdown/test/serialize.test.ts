@@ -115,6 +115,42 @@ describe('extractBlocks', () => {
 		).toThrow(/only one instance/);
 	});
 
+	test('inline-code tag mentions never open or close a block', () => {
+		// Regression: `<script>` as inline code in prose used to open a match
+		// that closed against a `</script>` inside a later fence, swallowing
+		// everything in between.
+		const source = [
+			'One instance `<script>` and one `<script module>` are allowed.',
+			'',
+			'```md',
+			'<script>',
+			'\tconst example = 1;',
+			'</script>',
+			'```',
+			'',
+			'A literal `</script>` inside a string ends the block early.',
+			''
+		].join('\n');
+		const blocks = extractBlocks(source);
+		expect(blocks.instanceScript).toBeUndefined();
+		expect(blocks.moduleScript).toBeUndefined();
+		expect(blocks.content).toBe(source);
+	});
+
+	test('real script after an inline-code mention is still extracted', () => {
+		const source = [
+			'Mentioning `<script>` in prose.',
+			'',
+			'<script>',
+			'\tconst real = 1;',
+			'</script>',
+			''
+		].join('\n');
+		const blocks = extractBlocks(source);
+		expect(blocks.instanceScript?.body).toContain('const real = 1;');
+		expect(blocks.content).toContain('Mentioning `<script>` in prose.');
+	});
+
 	test('ignores scripts and styles inside fenced code blocks', () => {
 		const source = [
 			'<script>',

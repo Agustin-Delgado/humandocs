@@ -1,6 +1,6 @@
 {
 	"name": "@human-kit/markdown",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "A markdown preprocessor for Svelte built on unified — components in markdown, frontmatter metadata, runes-compatible blueprints, and pluggable async syntax highlighting.",
 	"license": "MIT",
 	"type": "module",

@@ -1,5 +1,11 @@
 # @human-kit/markdown
 
+## 0.1.1
+
+### Patch Changes
+
+- [#2](https://github.com/Agustin-Delgado/humandocs/pull/2) [`cd68ac6`](https://github.com/Agustin-Delgado/humandocs/commit/cd68ac65bbe7632450f8f845035db3e383076155) Thanks [@Agustin-Delgado](https://github.com/Agustin-Delgado)! - Don't wrap block-level components in `<p>`. A component written on its own line (`<Demo />`, `<ApiReference />`) was paragraph-wrapped by remark; when it renders a block element the result is `<p><div></p>`, which the browser reparents — breaking Svelte hydration (`HierarchyRequestError`) and leaving the page unstyled after hydration. Paragraphs whose only content is raw component/HTML nodes are now unwrapped, while inline usage (`text <Component /> text`) keeps its paragraph.
+
 ## 0.1.0
 
 ### Minor Changes

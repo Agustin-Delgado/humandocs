@@ -4,7 +4,7 @@ description: The docs shell, live demos and API reference tables shipped with th
 ---
 
 <script>
-	import { Demo, PropsTable } from '@human-kit/humandocs/components';
+	import { Demo, PropsTable, ApiReference } from '@human-kit/humandocs/components';
 	import Counter from './demos/counter.svelte';
 	import counterSource from './demos/counter.svelte?highlight';
 
@@ -24,6 +24,18 @@ description: The docs shell, live demos and API reference tables shipped with th
 			description: 'Route prefix the slugs live under.'
 		}
 	];
+
+	const demoApi = {
+		component: 'Toc',
+		parts: [
+			{
+				name: 'Root',
+				description: 'The table-of-contents navigation.',
+				props: sampleProps,
+				dataAttributes: []
+			}
+		]
+	};
 </script>
 
 # Components
@@ -77,4 +89,8 @@ The three-column layout: header on top, sticky sidebar on the left, content in t
 
 ## Toc
 
-`Toc` builds the "on this page" list from the DOM (`article h2[id], article h3[id]` by default), so it works with any content that renders headings with ids — add `rehype-slug` to get them for free.
+`Toc` builds the "on this page" list from the DOM (`article h2[id], article h3[id]` by default), so it works with any content that renders headings with ids — add `rehype-slug` to get them for free. It seeds from `data.meta.headings` for SSR, then re-scans the DOM after hydration so component-rendered headings (like the ones below) are picked up too.
+
+## Live API reference
+
+<ApiReference api={demoApi} />

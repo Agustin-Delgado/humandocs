@@ -39,3 +39,18 @@ for (const path of PAGES) {
 		expect(hydrationProblems, hydrationProblems.join('\n')).toHaveLength(0);
 	});
 }
+
+test('component-rendered headings appear in the TOC after hydration', async ({ page }) => {
+	// <ApiReference> renders `api-*` headings from its data; the preprocessor
+	// runs before the component exists, so they are not in the SSR outline...
+	const response = await page.request.get('/docs/components');
+	const ssrHtml = await response.text();
+	expect(ssrHtml, 'component heading should not be in the SSR TOC').not.toContain(
+		'href="#api-root"'
+	);
+
+	// ...but the client re-scans the DOM and adds them. Regression guard: the
+	// TOC used to drop these when the SSR outline was treated as authoritative.
+	await page.goto('/docs/components', { waitUntil: 'networkidle' });
+	await expect(page.locator('[aria-label="On this page"] a[href="#api-root"]')).toBeVisible();
+});

@@ -36,8 +36,11 @@
 	// first heading is treated as active so the rendered output matches.
 	let scrollActiveId = $state<string | null>(null);
 
-	// SSR-safe headings win; otherwise fall back to what the client found.
-	const headings = $derived(ssrHeadings ?? domHeadings);
+	// Once the client has walked the DOM, that list wins — it is the ground
+	// truth and includes headings the preprocessor could not see (e.g. the
+	// `api-*` headings that <ApiReference> renders from its data). The SSR
+	// outline is only the pre-hydration fallback.
+	const headings = $derived(domHeadings.length > 0 ? domHeadings : (ssrHeadings ?? []));
 	const activeId = $derived(scrollActiveId ?? headings[0]?.id ?? null);
 
 	$effect(() => {
@@ -45,15 +48,14 @@
 		void page.url.pathname;
 
 		const elements = [...document.querySelectorAll(selector)];
-		// Read from a local, never from the state just written, or the effect
-		// depends on its own writes and loops forever.
-		if (!ssrHeadings) {
-			domHeadings = elements.map((el) => ({
-				id: el.id,
-				text: el.textContent ?? '',
-				depth: el.tagName === 'H2' ? 2 : 3
-			}));
-		}
+		// Always re-scan: reassigning (not appending) keeps it in sync with the
+		// current route. Reading a local, never the state just written, avoids
+		// an effect that depends on its own writes.
+		domHeadings = elements.map((el) => ({
+			id: el.id,
+			text: el.textContent ?? '',
+			depth: el.tagName === 'H2' ? 2 : 3
+		}));
 		scrollActiveId = null;
 
 		if (elements.length === 0) return;

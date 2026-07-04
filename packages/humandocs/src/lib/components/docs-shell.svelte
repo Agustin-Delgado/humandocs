@@ -5,6 +5,12 @@
 	import Toc from './toc.svelte';
 	import type { NavGroup } from '../content/types.js';
 
+	interface Heading {
+		id: string;
+		text: string;
+		depth: number;
+	}
+
 	interface Props {
 		nav: NavGroup[];
 		basePath?: string;
@@ -12,6 +18,12 @@
 		badge?: string;
 		githubUrl?: string;
 		homeHref?: string;
+		/**
+		 * Page heading outline for the table of contents. Pass
+		 * `data.meta.headings` so it renders during SSR; omit to let the TOC
+		 * discover headings from the DOM after hydration.
+		 */
+		headings?: Heading[];
 		/** Replace the whole header region. */
 		header?: Snippet;
 		/** Replace the sidebar region. */
@@ -28,6 +40,7 @@
 		badge,
 		githubUrl,
 		homeHref,
+		headings,
 		header,
 		sidebar,
 		toc,
@@ -63,7 +76,7 @@
 			{#if toc}
 				{@render toc()}
 			{:else}
-				<Toc />
+				<Toc {headings} />
 			{/if}
 		</aside>
 	</div>

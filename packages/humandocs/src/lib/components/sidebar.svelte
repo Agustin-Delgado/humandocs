@@ -23,9 +23,13 @@
 			<ul class="mt-2 space-y-0.5">
 				{#each group.items as item (item.slug)}
 					{@const href = `${base}${basePath}/${item.slug}`}
-					<!-- Compare against the literal path: resolve() returns RELATIVE urls
-					     and can never match page.url.pathname. -->
-					{@const active = page.url.pathname.replace(/\/$/, '') === href}
+					<!-- Active check must not use `base`: under `paths.relative` (the
+					     SvelteKit default) `base` is a RELATIVE prefix during SSR
+					     (`../docs/...`), so it never equals the absolute
+					     page.url.pathname and the highlight only appears after
+					     hydration. Match the absolute route suffix instead. -->
+					{@const route = `${basePath}/${item.slug}`}
+					{@const active = page.url.pathname.replace(/\/$/, '').endsWith(route)}
 					<li>
 						<a
 							{href}

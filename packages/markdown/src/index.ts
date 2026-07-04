@@ -7,9 +7,11 @@ import { selectBlueprint } from './blueprint.js';
 import { createPipeline } from './pipeline.js';
 import { serialize, type HastNode } from './serialize.js';
 import { unwrapBlockParagraphs } from './unwrap.js';
+import { extractHeadings } from './headings.js';
 import { assemble, BLUEPRINT_NAMESPACE } from './assemble.js';
 
 export type { MarkdownConfig, BlueprintConfig, Highlighter } from './config.js';
+export type { Heading } from './headings.js';
 
 /**
  * Escape `{`, `}` and `` ` `` in an HTML string so Svelte does not parse
@@ -42,13 +44,18 @@ export function humandocsMarkdown(userConfig: MarkdownConfig = {}): Preprocessor
 			// breaks hydration).
 			unwrapBlockParagraphs(hast);
 
+			// Expose the heading outline so a table of contents can render
+			// during SSR (rehype-slug must run for the ids to exist).
+			const headings = extractHeadings(hast);
+			const metadataWithHeadings = headings.length > 0 ? { ...metadata, headings } : metadata;
+
 			const markup = serialize(hast, {
 				overrides: blueprint?.overrides,
 				namespace: BLUEPRINT_NAMESPACE
 			});
 
 			const code = assemble({
-				metadata,
+				metadata: metadataWithHeadings,
 				markup,
 				moduleScript: blocks.moduleScript,
 				instanceScript: blocks.instanceScript,

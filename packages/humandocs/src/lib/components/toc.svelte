@@ -8,30 +8,53 @@
 	}
 
 	interface Props {
-		/** Where to look for headings. The default expects an `article` wrapper. */
+		/**
+		 * Headings to render. Pass the outline from `data.meta.headings` (the
+		 * preprocessor extracts it) so the list renders during SSR. When
+		 * omitted, headings are discovered from the DOM after hydration.
+		 */
+		headings?: Heading[];
+		/** Where to look for headings when none are provided. */
 		selector?: string;
 		label?: string;
 	}
 
-	let { selector = 'article h2[id], article h3[id]', label = 'On this page' }: Props = $props();
+	let {
+		headings: providedHeadings,
+		selector = 'article h2[id], article h3[id]',
+		label = 'On this page'
+	}: Props = $props();
 
-	let headings = $state<Heading[]>([]);
-	let activeId = $state<string | null>(null);
+	// By convention `createContentLoader` exposes the outline the preprocessor
+	// extracted at `data.meta.headings`, so the TOC renders during SSR with no
+	// wiring. An explicit `headings` prop overrides it.
+	const dataHeadings = $derived((page.data as { meta?: { headings?: Heading[] } })?.meta?.headings);
+	const ssrHeadings = $derived(providedHeadings ?? dataHeadings);
+
+	let domHeadings = $state<Heading[]>([]);
+	// Set by the scroll observer on the client; before that (and in SSR) the
+	// first heading is treated as active so the rendered output matches.
+	let scrollActiveId = $state<string | null>(null);
+
+	// SSR-safe headings win; otherwise fall back to what the client found.
+	const headings = $derived(ssrHeadings ?? domHeadings);
+	const activeId = $derived(scrollActiveId ?? headings[0]?.id ?? null);
 
 	$effect(() => {
-		// Re-collect whenever the route changes (after the new page renders).
+		// Re-run whenever the route changes (after the new page renders).
 		void page.url.pathname;
 
 		const elements = [...document.querySelectorAll(selector)];
-		// Assign from a local: reading `headings` back here would make the effect
-		// depend on the state it just wrote and re-run forever.
-		const collected = elements.map((el) => ({
-			id: el.id,
-			text: el.textContent ?? '',
-			depth: el.tagName === 'H2' ? 2 : 3
-		}));
-		headings = collected;
-		activeId = collected[0]?.id ?? null;
+		// Read from a local, never from the state just written, or the effect
+		// depends on its own writes and loops forever.
+		if (!ssrHeadings) {
+			domHeadings = elements.map((el) => ({
+				id: el.id,
+				text: el.textContent ?? '',
+				depth: el.tagName === 'H2' ? 2 : 3
+			}));
+		}
+		scrollActiveId = null;
 
 		if (elements.length === 0) return;
 
@@ -39,7 +62,7 @@
 			(entries) => {
 				for (const entry of entries) {
 					if (entry.isIntersecting) {
-						activeId = entry.target.id;
+						scrollActiveId = entry.target.id;
 						break;
 					}
 				}

@@ -1,0 +1,25 @@
+node_modules
+.svelte-kit
+dist
+build
+.env
+.env.*
+!.env.example
+
+# Monorepo
+**/node_modules
+**/.svelte-kit
+**/dist
+**/build
+
+# Vercel
+.vercel
+
+# Local artifacts / crash dumps
+*.stackdump
+
+# Stray package-manager files (this repo uses pnpm)
+bun.lock
+bun.lockb
+package-lock.json
+yarn.lock

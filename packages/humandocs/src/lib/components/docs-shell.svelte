@@ -1,0 +1,70 @@
+<script lang="ts">
+	import type { Snippet } from 'svelte';
+	import Header from './header.svelte';
+	import Sidebar from './sidebar.svelte';
+	import Toc from './toc.svelte';
+	import type { NavGroup } from '../content/types.js';
+
+	interface Props {
+		nav: NavGroup[];
+		basePath?: string;
+		title?: string;
+		badge?: string;
+		githubUrl?: string;
+		homeHref?: string;
+		/** Replace the whole header region. */
+		header?: Snippet;
+		/** Replace the sidebar region. */
+		sidebar?: Snippet;
+		/** Replace the "on this page" region. */
+		toc?: Snippet;
+		children: Snippet;
+	}
+
+	let {
+		nav,
+		basePath = '/docs',
+		title,
+		badge,
+		githubUrl,
+		homeHref,
+		header,
+		sidebar,
+		toc,
+		children
+	}: Props = $props();
+</script>
+
+<div class="min-h-screen bg-white dark:bg-gray-950">
+	{#if header}
+		{@render header()}
+	{:else}
+		<Header {title} {badge} {githubUrl} {homeHref} />
+	{/if}
+
+	<div class="mx-auto flex w-full max-w-screen-2xl">
+		<aside
+			class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 overflow-y-auto border-r border-gray-200 md:block dark:border-gray-800"
+		>
+			{#if sidebar}
+				{@render sidebar()}
+			{:else}
+				<Sidebar {nav} {basePath} />
+			{/if}
+		</aside>
+
+		<main class="min-w-0 flex-1 px-6 py-10 lg:px-12">
+			{@render children()}
+		</main>
+
+		<aside
+			class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 overflow-y-auto px-4 py-10 xl:block"
+		>
+			{#if toc}
+				{@render toc()}
+			{:else}
+				<Toc />
+			{/if}
+		</aside>
+	</div>
+</div>

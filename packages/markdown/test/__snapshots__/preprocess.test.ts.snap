@@ -1,0 +1,188 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`humandocsMarkdown output > basic markdown 1`] = `
+"<script module>
+	export const metadata = {"title":"Basic"};
+</script>
+
+<h1>Heading one</h1>
+<p>A paragraph with <strong>bold</strong>, <em>italic</em> and <code>inline code</code>.</p>
+<ul>
+<li>one</li>
+<li>two</li>
+</ul>
+<ol>
+<li>first</li>
+<li>second</li>
+</ol>
+<blockquote>
+<p>A quote.</p>
+</blockquote>
+<pre><code>plain fence, no language
+</code></pre>
+<p><a href="https://example.com">Link</a></p>
+<hr />
+"
+`;
+
+exports[`humandocsMarkdown output > blueprint: false opts out of wrapping 1`] = `
+"<script module>
+	export const metadata = {"title":"No blueprint","blueprint":false};
+</script>
+
+<h1>Bare</h1>
+<p>Rendered without any wrapper.</p>
+"
+`;
+
+exports[`humandocsMarkdown output > braces and backticks in prose are entity-escaped 1`] = `
+"<script module>
+	export const metadata = {"title":"Entities"};
+</script>
+
+<h1>Entities</h1>
+<p>Braces &#123; not an expression &#125; in prose, plus an inline <code>&#123;#each item&#125;</code> block.</p>
+<h2>Heading two</h2>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Value &#123; x &#125;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pipes</td>
+<td>braces &#123;&#125;</td>
+</tr>
+</tbody>
+</table>
+<p>A <a href="https://example.com" title="title with &#123;braces&#125;">link</a> too.</p>
+"
+`;
+
+exports[`humandocsMarkdown output > code blocks with a sync highlighter 1`] = `
+"<script module>
+	export const metadata = {"title":"Code"};
+</script>
+
+<h1>Code</h1>
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<pre class="fake" data-lang="svelte" data-meta=""><code><script>
+	let &#123; open = $bindable(false) &#125; = $props();
+</script>
+
+&#123;#if open&#125;
+	<p>&#123;open&#125;</p>
+&#123;/if&#125;</code></pre>
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<pre class="fake" data-lang="ts" data-meta="twoslash"><code>const x: number = 1;</code></pre>
+"
+`;
+
+exports[`humandocsMarkdown output > code blocks without a highlighter fall back to pre/code 1`] = `
+"<script module>
+	export const metadata = {"title":"Code"};
+</script>
+
+<h1>Code</h1>
+<pre><code class="language-svelte">&lt;script&gt;
+	let &#123; open = $bindable(false) &#125; = $props();
+&lt;/script&gt;
+
+&#123;#if open&#125;
+	&lt;p&gt;&#123;open&#125;&lt;/p&gt;
+&#123;/if&#125;
+</code></pre>
+<pre><code class="language-ts">const x: number = 1;
+</code></pre>
+"
+`;
+
+exports[`humandocsMarkdown output > default blueprint wraps content and overrides h2 1`] = `
+"<script module>
+	export const metadata = {"title":"With blueprint"};
+</script>
+
+<script>
+	import Blueprint__, * as blueprintModule__ from '<BLUEPRINTS>/default.svelte';
+</script>
+
+<Blueprint__ {metadata}>
+<h1>Title</h1>
+<blueprintModule__.h2>Overridden heading</blueprintModule__.h2>
+<p>Paragraph inside the blueprint.</p>
+</Blueprint__>
+"
+`;
+
+exports[`humandocsMarkdown output > frontmatter becomes a metadata export 1`] = `
+"<script module>
+	export const metadata = {"title":"Frontmatter","description":"A description with \\"quotes\\" and — dashes.","order":3,"draft":true};
+</script>
+
+<h1>Frontmatter</h1>
+<p>Body.</p>
+"
+`;
+
+exports[`humandocsMarkdown output > named blueprint without overrides imports only the default export 1`] = `
+"<script module>
+	export const metadata = {"title":"Named blueprint","blueprint":"plain"};
+</script>
+
+<script>
+	import Blueprint__ from '<BLUEPRINTS>/plain.svelte';
+</script>
+
+<Blueprint__ {metadata}>
+<h1>Named</h1>
+<p>Uses the plain blueprint without overrides.</p>
+</Blueprint__>
+"
+`;
+
+exports[`humandocsMarkdown output > svelte components pass through untouched 1`] = `
+"<script module>
+	export const metadata = {"title":"Components"};
+</script>
+
+<script>
+	import Counter from './counter.svelte';
+</script>
+
+<h1>Components</h1>
+<p>Inline <Counter start={1} /> in a sentence.</p>
+<Counter start={2}>
+	Tight children stay raw (no blank lines).
+</Counter>
+<Counter start={3}>
+<p><strong>Loose</strong> children are processed as markdown.</p>
+</Counter>
+"
+`;
+
+exports[`humandocsMarkdown output > user scripts are hoisted out of the markdown 1`] = `
+"<script module>
+	export const metadata = {"title":"Scripts"};
+
+	export const shared = 42;
+
+	export function helper() {
+		return shared;
+	}
+</script>
+
+<script lang="ts">
+	let count: number = 0;
+
+	function increment() {
+		count += 1;
+	}
+</script>
+
+<h1>Scripts</h1>
+<p>Count starts at zero.</p>
+<p><button onclick={increment}>Increment</button></p>
+"
+`;

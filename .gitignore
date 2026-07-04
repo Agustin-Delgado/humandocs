@@ -15,6 +15,11 @@ build
 # Vercel
 .vercel
 
+# Playwright
+test-results
+playwright-report
+.playwright
+
 # Local artifacts / crash dumps
 *.stackdump
 

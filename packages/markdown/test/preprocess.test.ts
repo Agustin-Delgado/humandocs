@@ -27,6 +27,18 @@ describe('humandocsMarkdown output', () => {
 		expect(code).toMatchSnapshot();
 	});
 
+	test('h2/h3 headings with ids are exported in metadata for SSR TOC', async () => {
+		const rehypeSlug = (await import('rehype-slug')).default;
+		const code = await runPreprocessor('entities.md', { rehypePlugins: [rehypeSlug] });
+		// entities.md has "## Heading two"; rehype-slug gives it an id.
+		expect(code).toMatch(/"headings":\[\{"id":"heading-two","text":"Heading two","depth":2\}\]/);
+	});
+
+	test('no headings key when rehype-slug is absent (no ids)', async () => {
+		const code = await runPreprocessor('entities.md');
+		expect(code).not.toContain('"headings"');
+	});
+
 	test('block-level components are not wrapped in <p> (would break hydration)', async () => {
 		const code = await runPreprocessor('block-components.md');
 		// A component alone on its line must not be paragraph-wrapped: it may

@@ -1,5 +1,11 @@
 # @human-kit/humandocs
 
+## 0.1.2
+
+### Patch Changes
+
+- [#6](https://github.com/Agustin-Delgado/humandocs/pull/6) [`f95d99a`](https://github.com/Agustin-Delgado/humandocs/commit/f95d99a114bc0e3160d3ec095b0e19f7ce2967aa) Thanks [@Agustin-Delgado](https://github.com/Agustin-Delgado)! - Fix the table of contents dropping component-rendered headings. `Toc` treated the SSR outline (`data.meta.headings`) as authoritative, but the preprocessor runs before components exist, so headings rendered by a component — such as the `api-*` sections `<ApiReference>` generates from its data — were missing from "On this page". The client now always re-scans the DOM after hydration and that complete list wins; the SSR outline is only the pre-hydration fallback.
+
 ## 0.1.1
 
 ### Patch Changes

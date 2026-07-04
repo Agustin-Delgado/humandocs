@@ -1,5 +1,11 @@
 # @human-kit/markdown
 
+## 0.2.0
+
+### Minor Changes
+
+- [#4](https://github.com/Agustin-Delgado/humandocs/pull/4) [`9705c07`](https://github.com/Agustin-Delgado/humandocs/commit/9705c07a33ecfbc62242a2a5b868e10070b33d68) Thanks [@Agustin-Delgado](https://github.com/Agustin-Delgado)! - Export the page's `h2`/`h3` heading outline as `metadata.headings` (id, text, depth) when the headings have ids. A table of contents can render this during SSR instead of only discovering headings from the DOM after hydration.
+
 ## 0.1.1
 
 ### Patch Changes

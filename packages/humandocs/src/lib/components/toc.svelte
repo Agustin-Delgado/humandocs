@@ -54,36 +54,39 @@
 		// Re-run whenever the route changes (after the new page renders).
 		void page.url.pathname;
 
-		const elements = [...document.querySelectorAll<HTMLElement>(selector)];
-		// Always re-scan: reassigning (not appending) keeps it in sync with the
-		// current route. Reading a local, never the state just written, avoids
-		// an effect that depends on its own writes.
-		domHeadings = elements.map((el) => ({
+		// Fallback outline for content rendered without a data outline. Reading a
+		// local, never the state just written, avoids an effect that depends on
+		// its own writes.
+		domHeadings = [...document.querySelectorAll<HTMLElement>(selector)].map((el) => ({
 			id: el.id,
 			text: el.textContent ?? '',
 			depth: el.tagName === 'H2' ? 2 : 3
 		}));
 
-		if (elements.length === 0) {
-			scrollActiveId = null;
-			return;
-		}
-
-		// Position-based scrollspy: the active heading is the last one whose top
-		// has passed the offset. At the top of the page nothing has, so it stays
-		// null and the first heading is active — the same state SSR renders.
+		// Scrollspy driven by IntersectionObserver: it fires on scroll from the
+		// browser itself (no dependency on scroll-event targeting, which proved
+		// unreliable for the document scroller). The active heading is computed by
+		// position — the last one whose top has passed the offset — and at the top
+		// of the page it is null so the first heading stays active, matching SSR.
 		const OFFSET = 100;
 		const updateActive = () => {
+			if (window.scrollY <= 0) {
+				scrollActiveId = null;
+				return;
+			}
 			let current: string | null = null;
-			for (const el of elements) {
+			for (const el of document.querySelectorAll<HTMLElement>(selector)) {
 				if (el.getBoundingClientRect().top <= OFFSET) current = el.id;
 				else break;
 			}
 			scrollActiveId = current;
 		};
-		updateActive();
-		window.addEventListener('scroll', updateActive, { passive: true });
-		return () => window.removeEventListener('scroll', updateActive);
+		const observer = new IntersectionObserver(updateActive, {
+			rootMargin: `-${OFFSET}px 0px 0px 0px`,
+			threshold: [0, 1]
+		});
+		for (const el of document.querySelectorAll<HTMLElement>(selector)) observer.observe(el);
+		return () => observer.disconnect();
 	});
 </script>
 

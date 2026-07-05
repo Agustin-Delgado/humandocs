@@ -8,3 +8,5 @@ Make the table of contents fully SSR-consistent. Two remaining differences betwe
 - **The active heading no longer flips on hydration.** The scrollspy is now position-based, so at the top of the page the first heading is active — the same state SSR renders — instead of an `IntersectionObserver` band picking a different one on load.
 
 The TOC also renders from the data outline (metadata + registered headings) in both SSR and client rather than switching to DOM-scanned text on hydration, so heading decorations (anchor links, etc.) no longer make the labels drift.
+
+`ThemeToggle` no longer flips its icon on hydration: the sun/moon are now chosen by the `.dark` class (set by the anti-FOUC script before paint) via CSS instead of JS state, so the correct icon shows from the first paint.

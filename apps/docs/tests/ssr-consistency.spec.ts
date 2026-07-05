@@ -52,23 +52,21 @@ test('component-rendered headings are in the TOC in SSR and after hydration', as
 	await expect(page.locator('[aria-label="On this page"] a[href="#api-root"]')).toBeVisible();
 });
 
-test('the active TOC heading is the same in SSR and after hydration', async ({ page }) => {
-	// At the top of the page the first heading is active; the scrollspy must not
-	// flip to a different one on hydration.
+test('SSR marks no active TOC heading; the client highlights the first at the top', async ({
+	page
+}) => {
+	// The active item depends on scroll, which SSR cannot know. Guessing (e.g.
+	// the first heading) flashes to the wrong item when the page loads scrolled,
+	// so SSR marks nothing active.
 	const response = await page.request.get('/docs/getting-started');
 	const ssrHtml = await response.text();
-	const ssrActive = ssrHtml.match(
-		/aria-label="On this page"[\s\S]*?<a[^>]*font-medium[^>]*>\s*([^<]+?)\s*</
-	);
+	const tocNav = ssrHtml.match(/aria-label="On this page"[\s\S]*?<\/nav>/)?.[0] ?? '';
+	expect(tocNav, 'TOC should render in SSR').not.toBe('');
+	expect(tocNav, 'SSR should not guess an active heading').not.toContain('font-medium');
 
+	// After hydration at the top, the first heading is active.
 	await page.goto('/docs/getting-started', { waitUntil: 'networkidle' });
 	await page.evaluate(() => window.scrollTo(0, 0));
 	await page.waitForTimeout(300);
-	const hydratedActive = await page
-		.locator('[aria-label="On this page"] a.font-medium')
-		.first()
-		.textContent();
-
-	expect(ssrActive?.[1]?.trim()).toBeTruthy();
-	expect(hydratedActive?.trim()).toBe(ssrActive?.[1]?.trim());
+	await expect(page.locator('[aria-label="On this page"] a.font-medium')).toHaveCount(1);
 });

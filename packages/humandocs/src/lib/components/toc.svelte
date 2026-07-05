@@ -48,7 +48,11 @@
 	// DOM would pick up heading decorations (e.g. anchor "#") and drift. The
 	// DOM scan is only a fallback for content rendered without that outline.
 	const headings = $derived(ssrHeadings.length > 0 ? ssrHeadings : domHeadings);
-	const activeId = $derived(scrollActiveId ?? headings[0]?.id ?? null);
+	// No fallback to the first heading: the active item depends on scroll, which
+	// only the client knows. Highlighting a guess in SSR causes a visible flash
+	// to the wrong item when the page loads scrolled (e.g. a reload). The client
+	// sets it — to the first heading at the top, or the scrolled section.
+	const activeId = $derived(scrollActiveId);
 
 	$effect(() => {
 		// Re-run whenever the route changes (after the new page renders).
@@ -70,17 +74,19 @@
 		// of the page it is null so the first heading stays active, matching SSR.
 		const OFFSET = 100;
 		const updateActive = () => {
-			if (window.scrollY <= 0) {
-				scrollActiveId = null;
-				return;
-			}
-			let current: string | null = null;
-			for (const el of document.querySelectorAll<HTMLElement>(selector)) {
+			const els = [...document.querySelectorAll<HTMLElement>(selector)];
+			// The active heading is the last one whose top has passed the offset;
+			// at the top of the page that is the first heading.
+			let current = els[0]?.id ?? null;
+			for (const el of els) {
 				if (el.getBoundingClientRect().top <= OFFSET) current = el.id;
 				else break;
 			}
 			scrollActiveId = current;
 		};
+		// Compute synchronously now (before paint) so the correct item is active
+		// from the first client frame, then keep it in sync via the observer.
+		updateActive();
 		const observer = new IntersectionObserver(updateActive, {
 			rootMargin: `-${OFFSET}px 0px 0px 0px`,
 			threshold: [0, 1]

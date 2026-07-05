@@ -1,5 +1,20 @@
 # @human-kit/humandocs
 
+## 0.1.3
+
+### Patch Changes
+
+- [#8](https://github.com/Agustin-Delgado/humandocs/pull/8) [`3f27f31`](https://github.com/Agustin-Delgado/humandocs/commit/3f27f316357827581532a862d32693d0479b66d4) Thanks [@Agustin-Delgado](https://github.com/Agustin-Delgado)! - Make the table of contents fully SSR-consistent. Two remaining differences between the server render and the hydrated page are gone:
+
+  - **Component-rendered headings now render in SSR.** Components that produce their own headings (e.g. `ApiReference`'s `api-*` sections) register them through a shared context the docs shell provides; because the content renders before the TOC aside, `Toc` picks them up during SSR instead of only after the client re-scans the DOM.
+  - **The active heading no longer flips on hydration.** The scrollspy is now position-based, so at the top of the page the first heading is active — the same state SSR renders — instead of an `IntersectionObserver` band picking a different one on load.
+
+  The TOC also renders from the data outline (metadata + registered headings) in both SSR and client rather than switching to DOM-scanned text on hydration, so heading decorations (anchor links, etc.) no longer make the labels drift.
+
+  `ThemeToggle` no longer flips its icon on hydration: the sun/moon are now chosen by the `.dark` class (set by the anti-FOUC script before paint) via CSS instead of JS state, so the correct icon shows from the first paint.
+
+- [#8](https://github.com/Agustin-Delgado/humandocs/pull/8) [`d86253d`](https://github.com/Agustin-Delgado/humandocs/commit/d86253d9b95ec7180012d39ab439d576e8e26374) Thanks [@Agustin-Delgado](https://github.com/Agustin-Delgado)! - Stop the table of contents from flashing the wrong item. The active heading depends on scroll, which SSR cannot know, so it no longer guesses (previously the first heading), which showed the wrong item for a frame when a page loaded scrolled (e.g. a reload). SSR now marks nothing active and the client sets it — the first heading at the top, or the scrolled section — computed synchronously so the correct item is active from the first client frame.
+
 ## 0.1.2
 
 ### Patch Changes

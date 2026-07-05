@@ -25,7 +25,18 @@
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
 		},
+		"./shiki": {
+			"types": "./dist/shiki.d.ts",
+			"default": "./dist/shiki.js"
+		},
+		"./vite": {
+			"types": "./dist/vite.d.ts",
+			"default": "./dist/vite.js"
+		},
 		"./package.json": "./package.json"
+	},
+	"bin": {
+		"hk-extract-api": "./dist/cli/extract-api.js"
 	},
 	"files": [
 		"dist"
@@ -41,15 +52,24 @@
 		"remark-gfm": "^4.0.1",
 		"remark-parse": "^11.0.0",
 		"remark-rehype": "^11.1.2",
+		"shiki": "^4.3.0",
+		"ts-morph": "^28.0.0",
 		"unified": "^11.0.5",
 		"unist-util-visit": "^5.0.0",
 		"vfile": "^6.0.3",
 		"yaml": "^2.8.0"
 	},
 	"peerDependencies": {
-		"svelte": "^5.0.0"
+		"svelte": "^5.0.0",
+		"vite": "^6.0.0 || ^7.0.0"
+	},
+	"peerDependenciesMeta": {
+		"vite": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
+		"vite": "^7.1.10",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@types/mdast": "^4.0.4",
 		"@types/node": "^20",

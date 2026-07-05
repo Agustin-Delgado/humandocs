@@ -76,8 +76,16 @@ humandocsMarkdown({ highlight });
 ```
 
 ```css
-.shiki, .shiki span { color: var(--shiki-light); background-color: var(--shiki-light-bg); }
-.dark .shiki, .dark .shiki span { color: var(--shiki-dark); background-color: var(--shiki-dark-bg); }
+.shiki,
+.shiki span {
+	color: var(--shiki-light);
+	background-color: var(--shiki-light-bg);
+}
+.dark .shiki,
+.dark .shiki span {
+	color: var(--shiki-dark);
+	background-color: var(--shiki-dark-bg);
+}
 ```
 
 ## Vite plugin (`@human-kit/markdown/vite`)

@@ -1,11 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { getRegisteredHeadings, type RegisteredHeading } from './toc-registry.js';
 
-	interface Heading {
-		id: string;
-		text: string;
-		depth: number;
-	}
+	type Heading = RegisteredHeading;
 
 	interface Props {
 		/**
@@ -25,53 +22,76 @@
 		label = 'On this page'
 	}: Props = $props();
 
+	// Headings that content components (e.g. ApiReference) rendered before the
+	// TOC in the tree — available synchronously during SSR (see toc-registry).
+	const registered = getRegisteredHeadings();
+
 	// By convention `createContentLoader` exposes the outline the preprocessor
 	// extracted at `data.meta.headings`, so the TOC renders during SSR with no
-	// wiring. An explicit `headings` prop overrides it.
+	// wiring. An explicit `headings` prop overrides it. Component-rendered
+	// headings are appended (they sit at the end of the document).
 	const dataHeadings = $derived((page.data as { meta?: { headings?: Heading[] } })?.meta?.headings);
-	const ssrHeadings = $derived(providedHeadings ?? dataHeadings);
+	const ssrHeadings = $derived.by(() => {
+		const base = providedHeadings ?? dataHeadings ?? [];
+		if (registered.length === 0) return base;
+		const seen = new Set(base.map((h) => h.id));
+		return [...base, ...registered.filter((h) => !seen.has(h.id))];
+	});
 
 	let domHeadings = $state<Heading[]>([]);
-	// Set by the scroll observer on the client; before that (and in SSR) the
-	// first heading is treated as active so the rendered output matches.
+	// The heading the reader has scrolled to; null while at the top so the
+	// first heading stays active — matching SSR.
 	let scrollActiveId = $state<string | null>(null);
 
-	// Once the client has walked the DOM, that list wins — it is the ground
-	// truth and includes headings the preprocessor could not see (e.g. the
-	// `api-*` headings that <ApiReference> renders from its data). The SSR
-	// outline is only the pre-hydration fallback.
-	const headings = $derived(domHeadings.length > 0 ? domHeadings : (ssrHeadings ?? []));
-	const activeId = $derived(scrollActiveId ?? headings[0]?.id ?? null);
+	// Prefer the data outline (metadata + component-registered headings) so the
+	// list and its text are identical in SSR and after hydration. Reading the
+	// DOM would pick up heading decorations (e.g. anchor "#") and drift. The
+	// DOM scan is only a fallback for content rendered without that outline.
+	const headings = $derived(ssrHeadings.length > 0 ? ssrHeadings : domHeadings);
+	// No fallback to the first heading: the active item depends on scroll, which
+	// only the client knows. Highlighting a guess in SSR causes a visible flash
+	// to the wrong item when the page loads scrolled (e.g. a reload). The client
+	// sets it — to the first heading at the top, or the scrolled section.
+	const activeId = $derived(scrollActiveId);
 
 	$effect(() => {
 		// Re-run whenever the route changes (after the new page renders).
 		void page.url.pathname;
 
-		const elements = [...document.querySelectorAll(selector)];
-		// Always re-scan: reassigning (not appending) keeps it in sync with the
-		// current route. Reading a local, never the state just written, avoids
-		// an effect that depends on its own writes.
-		domHeadings = elements.map((el) => ({
+		// Fallback outline for content rendered without a data outline. Reading a
+		// local, never the state just written, avoids an effect that depends on
+		// its own writes.
+		domHeadings = [...document.querySelectorAll<HTMLElement>(selector)].map((el) => ({
 			id: el.id,
 			text: el.textContent ?? '',
 			depth: el.tagName === 'H2' ? 2 : 3
 		}));
-		scrollActiveId = null;
 
-		if (elements.length === 0) return;
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						scrollActiveId = entry.target.id;
-						break;
-					}
-				}
-			},
-			{ rootMargin: '-80px 0px -70% 0px' }
-		);
-		for (const el of elements) observer.observe(el);
+		// Scrollspy driven by IntersectionObserver: it fires on scroll from the
+		// browser itself (no dependency on scroll-event targeting, which proved
+		// unreliable for the document scroller). The active heading is computed by
+		// position — the last one whose top has passed the offset — and at the top
+		// of the page it is null so the first heading stays active, matching SSR.
+		const OFFSET = 100;
+		const updateActive = () => {
+			const els = [...document.querySelectorAll<HTMLElement>(selector)];
+			// The active heading is the last one whose top has passed the offset;
+			// at the top of the page that is the first heading.
+			let current = els[0]?.id ?? null;
+			for (const el of els) {
+				if (el.getBoundingClientRect().top <= OFFSET) current = el.id;
+				else break;
+			}
+			scrollActiveId = current;
+		};
+		// Compute synchronously now (before paint) so the correct item is active
+		// from the first client frame, then keep it in sync via the observer.
+		updateActive();
+		const observer = new IntersectionObserver(updateActive, {
+			rootMargin: `-${OFFSET}px 0px 0px 0px`,
+			threshold: [0, 1]
+		});
+		for (const el of document.querySelectorAll<HTMLElement>(selector)) observer.observe(el);
 		return () => observer.disconnect();
 	});
 </script>

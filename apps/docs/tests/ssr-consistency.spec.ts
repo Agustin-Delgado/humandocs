@@ -40,17 +40,33 @@ for (const path of PAGES) {
 	});
 }
 
-test('component-rendered headings appear in the TOC after hydration', async ({ page }) => {
-	// <ApiReference> renders `api-*` headings from its data; the preprocessor
-	// runs before the component exists, so they are not in the SSR outline...
+test('component-rendered headings are in the TOC in SSR and after hydration', async ({ page }) => {
+	// <ApiReference> renders `api-*` headings from its data. The preprocessor
+	// cannot see them, but the component registers them (toc-registry) so they
+	// render in the SSR TOC too — not just after the client re-scans the DOM.
 	const response = await page.request.get('/docs/components');
 	const ssrHtml = await response.text();
-	expect(ssrHtml, 'component heading should not be in the SSR TOC').not.toContain(
-		'href="#api-root"'
-	);
+	expect(ssrHtml, 'component heading missing from the SSR TOC').toContain('href="#api-root"');
 
-	// ...but the client re-scans the DOM and adds them. Regression guard: the
-	// TOC used to drop these when the SSR outline was treated as authoritative.
 	await page.goto('/docs/components', { waitUntil: 'networkidle' });
 	await expect(page.locator('[aria-label="On this page"] a[href="#api-root"]')).toBeVisible();
+});
+
+test('SSR marks no active TOC heading; the client highlights the first at the top', async ({
+	page
+}) => {
+	// The active item depends on scroll, which SSR cannot know. Guessing (e.g.
+	// the first heading) flashes to the wrong item when the page loads scrolled,
+	// so SSR marks nothing active.
+	const response = await page.request.get('/docs/getting-started');
+	const ssrHtml = await response.text();
+	const tocNav = ssrHtml.match(/aria-label="On this page"[\s\S]*?<\/nav>/)?.[0] ?? '';
+	expect(tocNav, 'TOC should render in SSR').not.toBe('');
+	expect(tocNav, 'SSR should not guess an active heading').not.toContain('font-medium');
+
+	// After hydration at the top, the first heading is active.
+	await page.goto('/docs/getting-started', { waitUntil: 'networkidle' });
+	await page.evaluate(() => window.scrollTo(0, 0));
+	await page.waitForTimeout(300);
+	await expect(page.locator('[aria-label="On this page"] a.font-medium')).toHaveCount(1);
 });

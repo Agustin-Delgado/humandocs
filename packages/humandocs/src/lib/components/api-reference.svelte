@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import PropsTable from './props-table.svelte';
 	import DataAttributesTable from './data-attributes-table.svelte';
+	import { registerHeadings } from './toc-registry.js';
 	import type { ComponentApi } from '../api/types.js';
 
 	interface Props {
@@ -8,6 +10,15 @@
 	}
 
 	let { api }: Props = $props();
+
+	// Surface the `api-*` part headings to the TOC so they render in SSR (the
+	// preprocessor cannot see them — this component produces them at runtime).
+	// One-time registration during init; the client TOC re-scans the DOM.
+	untrack(() =>
+		registerHeadings(
+			api.parts.map((part) => ({ id: `api-${part.name.toLowerCase()}`, text: part.name, depth: 3 }))
+		)
+	);
 </script>
 
 {#each api.parts as part (part.name)}

@@ -63,6 +63,57 @@ Export a component named after an HTML tag from the blueprint's `<script module>
 | `gfm`           | `boolean`                          | `true`    | GitHub Flavored Markdown.                                                                                                  |
 | `highlight`     | `(code, lang, meta) => html`       | —         | Async code-block highlighter. Return Svelte-safe HTML (`escapeSvelte` helps) or `undefined` for the default `<pre><code>`. |
 
+## Shiki highlighter (`@human-kit/markdown/shiki`)
+
+A ready-made dual-theme (github-light/github-dark) code-block highlighter for the `highlight` option, emitting CSS variables so the consumer's `.dark` class switches themes with zero client JS:
+
+```js
+// svelte.config.js
+import { humandocsMarkdown } from '@human-kit/markdown';
+import { highlight } from '@human-kit/markdown/shiki';
+
+humandocsMarkdown({ highlight });
+```
+
+```css
+.shiki, .shiki span { color: var(--shiki-light); background-color: var(--shiki-light-bg); }
+.dark .shiki, .dark .shiki span { color: var(--shiki-dark); background-color: var(--shiki-dark-bg); }
+```
+
+## Vite plugin (`@human-kit/markdown/vite`)
+
+Resolves `./demo.svelte?highlight` imports to `{ code, html }` — the raw source plus its shiki-highlighted HTML, generated at build time:
+
+```js
+// vite.config.js
+import { demoHighlight } from '@human-kit/markdown/vite';
+
+export default { plugins: [demoHighlight(), sveltekit()] };
+```
+
+```svelte
+<script>
+	import demo from './demo.svelte?highlight';
+</script>
+```
+
+Ambient type for the import, in `app.d.ts`:
+
+```ts
+declare module '*.svelte?highlight' {
+	const source: { code: string; html: string };
+	export default source;
+}
+```
+
+## API extractor CLI (`hk-extract-api`)
+
+Extracts component API data (props + data attributes) from a Svelte component library into `<content>/<component>/api.json`, purely syntactically (ts-morph, no type checker). Only components with an existing folder under the content dir are processed; hand-curated `description` fields in an existing api.json are preserved.
+
+```bash
+hk-extract-api --lib packages/ui/src/lib --content docs/src/content [component…]
+```
+
 ## Notes
 
 - Curly braces and backticks in prose are entity-escaped so Svelte never parses them; expressions only run inside components/raw HTML.

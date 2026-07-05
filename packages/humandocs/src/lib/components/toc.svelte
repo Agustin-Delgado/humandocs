@@ -1,11 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { getRegisteredHeadings, type RegisteredHeading } from './toc-registry.js';
 
-	interface Heading {
-		id: string;
-		text: string;
-		depth: number;
-	}
+	type Heading = RegisteredHeading;
 
 	interface Props {
 		/**
@@ -25,29 +22,39 @@
 		label = 'On this page'
 	}: Props = $props();
 
+	// Headings that content components (e.g. ApiReference) rendered before the
+	// TOC in the tree — available synchronously during SSR (see toc-registry).
+	const registered = getRegisteredHeadings();
+
 	// By convention `createContentLoader` exposes the outline the preprocessor
 	// extracted at `data.meta.headings`, so the TOC renders during SSR with no
-	// wiring. An explicit `headings` prop overrides it.
+	// wiring. An explicit `headings` prop overrides it. Component-rendered
+	// headings are appended (they sit at the end of the document).
 	const dataHeadings = $derived((page.data as { meta?: { headings?: Heading[] } })?.meta?.headings);
-	const ssrHeadings = $derived(providedHeadings ?? dataHeadings);
+	const ssrHeadings = $derived.by(() => {
+		const base = providedHeadings ?? dataHeadings ?? [];
+		if (registered.length === 0) return base;
+		const seen = new Set(base.map((h) => h.id));
+		return [...base, ...registered.filter((h) => !seen.has(h.id))];
+	});
 
 	let domHeadings = $state<Heading[]>([]);
-	// Set by the scroll observer on the client; before that (and in SSR) the
-	// first heading is treated as active so the rendered output matches.
+	// The heading the reader has scrolled to; null while at the top so the
+	// first heading stays active — matching SSR.
 	let scrollActiveId = $state<string | null>(null);
 
-	// Once the client has walked the DOM, that list wins — it is the ground
-	// truth and includes headings the preprocessor could not see (e.g. the
-	// `api-*` headings that <ApiReference> renders from its data). The SSR
-	// outline is only the pre-hydration fallback.
-	const headings = $derived(domHeadings.length > 0 ? domHeadings : (ssrHeadings ?? []));
+	// Prefer the data outline (metadata + component-registered headings) so the
+	// list and its text are identical in SSR and after hydration. Reading the
+	// DOM would pick up heading decorations (e.g. anchor "#") and drift. The
+	// DOM scan is only a fallback for content rendered without that outline.
+	const headings = $derived(ssrHeadings.length > 0 ? ssrHeadings : domHeadings);
 	const activeId = $derived(scrollActiveId ?? headings[0]?.id ?? null);
 
 	$effect(() => {
 		// Re-run whenever the route changes (after the new page renders).
 		void page.url.pathname;
 
-		const elements = [...document.querySelectorAll(selector)];
+		const elements = [...document.querySelectorAll<HTMLElement>(selector)];
 		// Always re-scan: reassigning (not appending) keeps it in sync with the
 		// current route. Reading a local, never the state just written, avoids
 		// an effect that depends on its own writes.
@@ -56,23 +63,27 @@
 			text: el.textContent ?? '',
 			depth: el.tagName === 'H2' ? 2 : 3
 		}));
-		scrollActiveId = null;
 
-		if (elements.length === 0) return;
+		if (elements.length === 0) {
+			scrollActiveId = null;
+			return;
+		}
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						scrollActiveId = entry.target.id;
-						break;
-					}
-				}
-			},
-			{ rootMargin: '-80px 0px -70% 0px' }
-		);
-		for (const el of elements) observer.observe(el);
-		return () => observer.disconnect();
+		// Position-based scrollspy: the active heading is the last one whose top
+		// has passed the offset. At the top of the page nothing has, so it stays
+		// null and the first heading is active — the same state SSR renders.
+		const OFFSET = 100;
+		const updateActive = () => {
+			let current: string | null = null;
+			for (const el of elements) {
+				if (el.getBoundingClientRect().top <= OFFSET) current = el.id;
+				else break;
+			}
+			scrollActiveId = current;
+		};
+		updateActive();
+		window.addEventListener('scroll', updateActive, { passive: true });
+		return () => window.removeEventListener('scroll', updateActive);
 	});
 </script>
 

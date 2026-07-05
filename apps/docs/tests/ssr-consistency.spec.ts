@@ -40,17 +40,35 @@ for (const path of PAGES) {
 	});
 }
 
-test('component-rendered headings appear in the TOC after hydration', async ({ page }) => {
-	// <ApiReference> renders `api-*` headings from its data; the preprocessor
-	// runs before the component exists, so they are not in the SSR outline...
+test('component-rendered headings are in the TOC in SSR and after hydration', async ({ page }) => {
+	// <ApiReference> renders `api-*` headings from its data. The preprocessor
+	// cannot see them, but the component registers them (toc-registry) so they
+	// render in the SSR TOC too — not just after the client re-scans the DOM.
 	const response = await page.request.get('/docs/components');
 	const ssrHtml = await response.text();
-	expect(ssrHtml, 'component heading should not be in the SSR TOC').not.toContain(
-		'href="#api-root"'
-	);
+	expect(ssrHtml, 'component heading missing from the SSR TOC').toContain('href="#api-root"');
 
-	// ...but the client re-scans the DOM and adds them. Regression guard: the
-	// TOC used to drop these when the SSR outline was treated as authoritative.
 	await page.goto('/docs/components', { waitUntil: 'networkidle' });
 	await expect(page.locator('[aria-label="On this page"] a[href="#api-root"]')).toBeVisible();
+});
+
+test('the active TOC heading is the same in SSR and after hydration', async ({ page }) => {
+	// At the top of the page the first heading is active; the scrollspy must not
+	// flip to a different one on hydration.
+	const response = await page.request.get('/docs/getting-started');
+	const ssrHtml = await response.text();
+	const ssrActive = ssrHtml.match(
+		/aria-label="On this page"[\s\S]*?<a[^>]*font-medium[^>]*>\s*([^<]+?)\s*</
+	);
+
+	await page.goto('/docs/getting-started', { waitUntil: 'networkidle' });
+	await page.evaluate(() => window.scrollTo(0, 0));
+	await page.waitForTimeout(300);
+	const hydratedActive = await page
+		.locator('[aria-label="On this page"] a.font-medium')
+		.first()
+		.textContent();
+
+	expect(ssrActive?.[1]?.trim()).toBeTruthy();
+	expect(hydratedActive?.trim()).toBe(ssrActive?.[1]?.trim());
 });

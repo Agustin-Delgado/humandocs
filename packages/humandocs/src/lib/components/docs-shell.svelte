@@ -3,11 +3,11 @@
 	import Header from './header.svelte';
 	import Sidebar from './sidebar.svelte';
 	import Toc from './toc.svelte';
-	import { provideTocRegistry } from './toc-registry.js';
+	import { provideTocRegistry } from './toc-registry.svelte.js';
 	import type { NavGroup } from '../content/types.js';
 
 	// Lets content components (e.g. ApiReference) surface their own headings to
-	// the TOC during SSR; see toc-registry.ts.
+	// the TOC; see toc-registry.svelte.ts.
 	provideTocRegistry();
 
 	interface Heading {

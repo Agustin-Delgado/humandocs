@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { getRegisteredHeadings, type RegisteredHeading } from './toc-registry.js';
+	import { getRegisteredHeadings, type RegisteredHeading } from './toc-registry.svelte.js';
 
 	type Heading = RegisteredHeading;
 
@@ -23,8 +23,10 @@
 	}: Props = $props();
 
 	// Headings that content components (e.g. ApiReference) rendered before the
-	// TOC in the tree — available synchronously during SSR (see toc-registry).
-	const registered = getRegisteredHeadings();
+	// TOC in the tree — available synchronously during SSR, and reactive on the
+	// client so navigation swaps them with the new page's (see toc-registry).
+	const readRegistered = getRegisteredHeadings();
+	const registered = $derived(readRegistered());
 
 	// By convention `createContentLoader` exposes the outline the preprocessor
 	// extracted at `data.meta.headings`, so the TOC renders during SSR with no

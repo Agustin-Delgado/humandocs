@@ -1,6 +1,6 @@
 {
 	"name": "@human-kit/humandocs",
-	"version": "0.1.2",
+	"version": "0.1.4",
 	"description": "A documentation kit for Svelte and SvelteKit — docs shell components, live demos with source, generated API reference tables, and a shiki dual-theme preset.",
 	"license": "MIT",
 	"type": "module",

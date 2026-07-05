@@ -52,6 +52,32 @@ test('component-rendered headings are in the TOC in SSR and after hydration', as
 	await expect(page.locator('[aria-label="On this page"] a[href="#api-root"]')).toBeVisible();
 });
 
+test('the TOC updates on client-side navigation', async ({ page }) => {
+	// The heading registry lives in the docs shell (a layout), which client-side
+	// navigation does not remount. Entries a page registered must be dropped
+	// when it unmounts, or the TOC keeps showing the previous page's headings
+	// until a full reload.
+	const problems = collectProblems(page);
+	await page.goto('/docs/components', { waitUntil: 'networkidle' });
+	const toc = page.locator('[aria-label="On this page"]');
+	await expect(toc.locator('a[href="#api-root"]')).toBeVisible();
+
+	// Client-side navigation to a page without component-rendered headings.
+	await page.locator('aside a[href="/docs/markdown"]').click();
+	await page.waitForURL('**/docs/markdown');
+	await expect(toc.locator('a[href="#api-root"]')).toHaveCount(0);
+	// The new page's own outline replaced the old one.
+	await expect(toc.locator('a').first()).toBeVisible();
+
+	// And back: the api headings register again.
+	await page.locator('aside a[href="/docs/components"]').click();
+	await page.waitForURL('**/docs/components');
+	await expect(toc.locator('a[href="#api-root"]')).toHaveCount(1);
+
+	// No duplicate-key crashes or state warnings while navigating.
+	expect(problems, problems.join('\n')).toHaveLength(0);
+});
+
 test('SSR marks no active TOC heading; the client highlights the first at the top', async ({
 	page
 }) => {

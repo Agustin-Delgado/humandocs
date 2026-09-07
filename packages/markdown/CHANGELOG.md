@@ -1,5 +1,13 @@
 # @human-kit/markdown
 
+## 0.3.1
+
+### Patch Changes
+
+- [#12](https://github.com/Agustin-Delgado/humandocs/pull/12) [`5656f41`](https://github.com/Agustin-Delgado/humandocs/commit/5656f41d9e38a3768f9db49ea8a169d82cf0f542) Thanks [@Agustin-Delgado](https://github.com/Agustin-Delgado)! - `hk-extract-api` gave a part the props of another part. A component folder with a shared `types.ts` holds the props of its root, and a part with no declaration in that file took the first one it found there — so a part that lives in another folder, or that declares its props inline, was documented with the props of the root. The lookup now falls through to the file of the part, which is where its props actually are.
+
+  The CLI also stops running on import, so `runExtractApi` can be called from a test.
+
 ## 0.3.0
 
 ### Minor Changes

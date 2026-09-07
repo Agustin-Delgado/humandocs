@@ -16,6 +16,7 @@
 import { readdir, readFile, writeFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 import { Node, Project } from 'ts-morph';
 import type {
 	InterfaceDeclaration,
@@ -121,7 +122,12 @@ function collectPropsDeclarations(
 	sourceFile: SourceFile,
 	partName: string,
 	componentPascal: string | undefined,
-	otherPartTypeNames: Set<string> | undefined
+	otherPartTypeNames: Set<string> | undefined,
+	// Whether an unnamed match may stand in. A component file holds the props of one
+	// component, so its single declaration is unambiguous. A shared `types.ts` holds the
+	// props of every part, and there the first declaration is somebody else's: a part
+	// whose type is not in that file has to fall through to its own file instead.
+	allowUnnamedMatch = true
 ): PropsDeclaration[] | undefined {
 	const candidates: PropsDeclaration[] = [
 		...sourceFile.getTypeAliases(),
@@ -134,7 +140,8 @@ function collectPropsDeclarations(
 		(componentPascal &&
 			candidates.find((d) => d.getName() === `${componentPascal}${partName}Props`)) ||
 		candidates.find((d) => d.getName().endsWith(`${partName}Props`)) ||
-		candidates[0];
+		(allowUnnamedMatch ? candidates[0] : undefined);
+	if (!base) return undefined;
 	const baseName = base.getName().slice(0, -'Props'.length);
 	// Variant declarations (TableBodyItemsProps on top of TableBodyProps), but
 	// never another part's own type (TableColumnResizerProps is ColumnResizer's,
@@ -365,9 +372,12 @@ async function extractPartProps({
 			typesSourceFile,
 			partName,
 			componentPascal,
-			otherPartTypeNames
+			otherPartTypeNames,
+			false
 		);
-		declarationSource = typesSource;
+		if (declarations) {
+			declarationSource = typesSource;
+		}
 	}
 	if (!declarations) {
 		const scriptSourceFile = project.createSourceFile(`virtual/script-${depth}.ts`, scriptBody, {
@@ -554,4 +564,9 @@ function parseArgs(argv: string[]): ExtractApiOptions {
 	return options;
 }
 
-await runExtractApi(parseArgs(process.argv.slice(2)));
+// Only when this file is the entry point. Without the guard the CLI runs on import, and a
+// test that wants `runExtractApi` gets the command line of the test runner instead.
+const entryPoint = process.argv[1] ? pathToFileURL(process.argv[1]).href : undefined;
+if (import.meta.url === entryPoint) {
+	await runExtractApi(parseArgs(process.argv.slice(2)));
+}

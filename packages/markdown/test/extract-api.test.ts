@@ -1,8 +1,9 @@
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { runExtractApi } from '../src/cli/extract-api.js';
+import { isEntryModule, runExtractApi } from '../src/cli/extract-api.js';
 
 type ApiFile = {
 	component: string;
@@ -96,5 +97,31 @@ describe('extract-api', () => {
 
 		expect(root?.props.map((prop) => prop.name)).toEqual(['value', 'orientation']);
 		expect(item?.props.map((prop) => prop.name)).toEqual(['value', 'disabled']);
+	});
+});
+
+describe('isEntryModule', () => {
+	// A package manager runs the CLI through a shim, thus the entry path holds `..` segments
+	// and the module url holds the resolved path. A comparison of the two strings said no, and
+	// the CLI then did the work of nobody: it exited with no message and no output file.
+	it('accepts an entry path that says the same file in another shape', async () => {
+		const root = await mkdtemp(path.join(tmpdir(), 'hk-entry-'));
+		const file = path.join(root, 'cli.js');
+		await writeFile(file, '', 'utf-8');
+		const indirect = path.join(root, 'nested', '..', 'cli.js');
+
+		expect(isEntryModule(pathToFileURL(file).href, indirect)).toBe(true);
+	});
+
+	it('refuses another file, and a missing one', async () => {
+		const root = await mkdtemp(path.join(tmpdir(), 'hk-entry-'));
+		const file = path.join(root, 'cli.js');
+		const other = path.join(root, 'other.js');
+		await writeFile(file, '', 'utf-8');
+		await writeFile(other, '', 'utf-8');
+
+		expect(isEntryModule(pathToFileURL(file).href, other)).toBe(false);
+		expect(isEntryModule(pathToFileURL(file).href, path.join(root, 'gone.js'))).toBe(false);
+		expect(isEntryModule(pathToFileURL(file).href, undefined)).toBe(false);
 	});
 });

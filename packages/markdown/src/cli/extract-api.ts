@@ -13,10 +13,11 @@
 // processed (opt-in per documented page). Hand-curated `description` fields
 // in an existing api.json are preserved when the extraction yields none.
 
+import { realpathSync } from 'node:fs';
 import { readdir, readFile, writeFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { Node, Project } from 'ts-morph';
 import type {
 	InterfaceDeclaration,
@@ -564,9 +565,25 @@ function parseArgs(argv: string[]): ExtractApiOptions {
 	return options;
 }
 
+/**
+ * Whether `moduleUrl` names the file that node was told to run.
+ *
+ * The two paths reach here in different shapes, thus a string comparison is not enough. A
+ * package manager runs the CLI through a shim, which gives an entry path with `..` segments and
+ * through a symlink, while `import.meta.url` always holds the resolved path. `realpath` brings
+ * both to the same one. A mismatch here makes the CLI exit with no work and no message.
+ */
+export function isEntryModule(moduleUrl: string, entryPath = process.argv[1]): boolean {
+	if (!entryPath) return false;
+	try {
+		return realpathSync(entryPath) === realpathSync(fileURLToPath(moduleUrl));
+	} catch {
+		return false;
+	}
+}
+
 // Only when this file is the entry point. Without the guard the CLI runs on import, and a
 // test that wants `runExtractApi` gets the command line of the test runner instead.
-const entryPoint = process.argv[1] ? pathToFileURL(process.argv[1]).href : undefined;
-if (import.meta.url === entryPoint) {
+if (isEntryModule(import.meta.url)) {
 	await runExtractApi(parseArgs(process.argv.slice(2)));
 }

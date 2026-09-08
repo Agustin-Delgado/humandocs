@@ -1,5 +1,11 @@
 # @human-kit/markdown
 
+## 0.3.2
+
+### Patch Changes
+
+- [#14](https://github.com/Agustin-Delgado/humandocs/pull/14) [`b1cde22`](https://github.com/Agustin-Delgado/humandocs/commit/b1cde2219e2c95a2260b781c58a56e8340a8543a) Thanks [@Agustin-Delgado](https://github.com/Agustin-Delgado)! - Run `hk-extract-api` again when a package manager starts it. The guard that keeps the CLI from running on import compared the entry path with the module url as text, but a package manager runs the CLI through a shim: the entry path then holds `..` segments and goes through a symlink, while the module url holds the resolved path. The two never matched, thus the command exited with no work, no output file and no message. It now compares the real path of each.
+
 ## 0.3.1
 
 ### Patch Changes
